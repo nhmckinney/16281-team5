@@ -33,6 +33,8 @@ def main():
     # - 3-axis magnetometer data in uT
 
     while True:
+
+
         print("----")
         print(f"Acceleration: {imu.accel}")
         print(f"Angular Velocity: {imu.gyro}")
@@ -41,16 +43,16 @@ def main():
         print("----")
 
 
-        last_error = 0 
-        error = current_lux - threshold
-        derivative = error - last_error
-        correction = ((error * KP) + (derivative * KD))
-        last_error = error
+        #last_error = 0 
+        #error = CURRENT - DESIRED
+        #derivative = error - last_error
+        #correction = ((error * KP) + (derivative * KD))
+        #last_error = error
 
-        l_cmd = BASE_SPEED + correction
-        r_cmd = -(BASE_SPEED - correction)
-        left_motor.power_command = l_cmd
-        right_motor.power_command = r_cmd
+        #l_cmd = BASE_SPEED + correction
+        #r_cmd = -(BASE_SPEED - correction)
+        left_motor.power_command = 0.5 #l_cmd
+        right_motor.power_command = 0.5 #r_cmd
 
         # Delay as long as you need, communications continue in the background
         time.sleep(1)
