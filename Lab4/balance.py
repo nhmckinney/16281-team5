@@ -51,8 +51,8 @@ def main():
 
         #l_cmd = BASE_SPEED + correction
         #r_cmd = -(BASE_SPEED - correction)
-        left_motor.power_command = 0.5 #l_cmd
-        right_motor.power_command = 0.5 #r_cmd
+        #left_motor.power_command = 0.5 #l_cmd
+        #right_motor.power_command = 0.5 #r_cmd
 
         # Delay as long as you need, communications continue in the background
         time.sleep(1)
