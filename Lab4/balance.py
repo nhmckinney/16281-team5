@@ -38,7 +38,7 @@ def main():
         print("----")
         print(f"Acceleration: {imu.accel}")
         print(f"Angular Velocity: {imu.gyro}")
-        print(f"Magnetic Field: {imu.mag}")
+        #print(f"Magnetic Field: {imu.mag}")
         print(f"Gravity Vector: {imu.gravity_vector}")
         print("----")
 
