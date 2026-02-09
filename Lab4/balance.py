@@ -15,21 +15,18 @@ def calcAngle(accel,angvel,grav,changetime,currAngle):
     accx,accy,accz = accel[0],accel[1],accel[2]
     angvx,angvy,angvz = angvel[0],angvel[1],angvel[2]
     gravx,gravy,gravz = grav[0],grav[1],grav[2]
-    anglegrav = math.atan2(gravx,gravz)
-    angleacc = math.atan2(accx,accz)
+    anglegrav = math.atan2(gravy,gravz)
+    angleacc = math.atan2(accy,accz)
     # weighted average depending on which is more accurate/useful, can play 
     # around with k between 0 and 1
-    k1 = 0.5
-    angle = k1*anglegrav + (1-k1)*angleacc
-    anggyro = currAngle + angvy*changetime
     #another weighted average below that can get changed based on tuning
     # k2 should probably be a lot closer to 1 (like 0.9-1) because what matters
     # way more is the gyro I heard another group talking about how they did the
     # same as the calculation before and used k2 = 0.98. I tried using k2 = 0.98
     # and the numbers started getting weird so idk might have to play around or 
     # try to understand more how it works.
-    k2 = 0.5
-    angle = k2*anggyro + (1-k2)*angle
+    k1 = 0.35
+    angle = k1 * (currAngle + angvy*changetime) + (1-k1) * anglegrav
     return angle, angvy
 
 def main():
@@ -46,12 +43,12 @@ def main():
     left_motor.control_mode = ControlMode.POWER
     right_motor.control_mode = ControlMode.POWER
     
-    power = 0.3
-    P = 0.175  
-    D = 0.225
-    tchange = 0.01 #time between while iterations (time.sleep(tchange))
+    P = 21
+    D = 0.15
+    tchange = 0.005 #time between while iterations (time.sleep(tchange))
 
     currAngle = 0 #initializing current angle, as robot should start straight up
+    last_error = 0
     # The IMU object provides the raw IMU data:
     # - 3-axis accelerometer data in m/s^2
     # - 3-axis gyroscope data in rad/s
@@ -68,13 +65,19 @@ def main():
         #3: calc angle
         currAngle, gy = calcAngle(imu.accel,imu.gyro,imu.gravity_vector,
                                 tchange,currAngle)
-        print(f"angle = {currAngle}")
+        print(f"angle: {currAngle}")
+
         #gy is the gyroscope measurement for the rad/s, is used for the D control
 
         #4: Use PID to control motors based on angle
+        error = currAngle
+        dererror = (error - last_error) / tchange
+        last_error = error
+        output = P*error + D*dererror
 
-        left_motor.power_command = 0
-        right_motor.power_command = 0
+        left_motor.power_command = output
+        right_motor.power_command = -output #motor is reversed
+        print(f"output: {output}")
 
         print("----")
         print(f"Acceleration: {imu.accel}")
@@ -106,5 +109,3 @@ def stop_motors():
 
 if __name__ == "__main__":
     main()
-
-
