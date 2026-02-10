@@ -16,7 +16,6 @@ def calcAngle(accel,angvel,grav,changetime,currAngle):
     angvx,angvy,angvz = angvel[0],angvel[1],angvel[2]
     gravx,gravy,gravz = grav[0],grav[1],grav[2]
     anglegrav = math.atan2(gravy,gravz)
-    angleacc = math.atan2(accy,accz)
     # weighted average depending on which is more accurate/useful, can play 
     # around with k between 0 and 1
     #another weighted average below that can get changed based on tuning
@@ -25,7 +24,7 @@ def calcAngle(accel,angvel,grav,changetime,currAngle):
     # same as the calculation before and used k2 = 0.98. I tried using k2 = 0.98
     # and the numbers started getting weird so idk might have to play around or 
     # try to understand more how it works.
-    k1 = 0.35
+    k1 = 0.4
     angle = k1 * (currAngle + angvy*changetime) + (1-k1) * anglegrav
     return angle, angvy
 
@@ -43,9 +42,12 @@ def main():
     left_motor.control_mode = ControlMode.POWER
     right_motor.control_mode = ControlMode.POWER
     
-    P = 21
-    D = 0.15
-    tchange = 0.005 #time between while iterations (time.sleep(tchange))
+    P = 10.5       #15 w/ half used battery
+    #10 with full battery
+    D = 0.5      #0.3 w/ half used battery
+    # D = 0.35 with full
+    #WORKS: P = 15 D = 0.4
+    tchange = 0.01 #time between while iterations (time.sleep(tchange))
 
     currAngle = 0 #initializing current angle, as robot should start straight up
     last_error = 0
@@ -65,7 +67,7 @@ def main():
         #3: calc angle
         currAngle, gy = calcAngle(imu.accel,imu.gyro,imu.gravity_vector,
                                 tchange,currAngle)
-        print(f"angle: {currAngle}")
+        print(f"angle: {currAngle:.1f}")
 
         #gy is the gyroscope measurement for the rad/s, is used for the D control
 
@@ -75,16 +77,21 @@ def main():
         last_error = error
         output = P*error + D*dererror
 
-        left_motor.power_command = output
-        right_motor.power_command = -output #motor is reversed
-        print(f"output: {output}")
+        if output > 1:
+            output = 1
+        elif output < -1:
+            output = -1
 
-        print("----")
-        print(f"Acceleration: {imu.accel}")
-        print(f"Angular Velocity: {imu.gyro}")
+        left_motor.power_command = -output
+        right_motor.power_command = output #motor is reversed
+        print(f"output: {output:.1f}")
+
+        #print("----")
+        #print(f"Acceleration: {imu.accel}")
+        #print(f"Angular Velocity: {imu.gyro}")
         #print(f"Magnetic Field: {imu.mag}")
-        print(f"Gravity Vector: {imu.gravity_vector}")
-        print("----")
+        #print(f"Gravity Vector: {imu.gravity_vector}")
+        #print("----")
 
 
         #last_error = 0 
