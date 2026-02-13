@@ -213,4 +213,7 @@ resolution = 4
 img = construct_map(isEasy, resolution)
 
 plt.imshow(img, cmap=plt.cm.gray, origin='lower')
-plt.show()
+#plt.show()
+
+plt.savefig("map.png", dpi=300, bbox_inches="tight")
+print("saved map")
