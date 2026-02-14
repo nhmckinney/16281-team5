@@ -9,14 +9,9 @@ def wavefront(res,start,goal,obstaclesSet):
 
 
 
-    #start,goal coordinates are relative to a bottom left origin
-    #only row values need to be updated
-
     x1, y1 = start
     x2, y2 = goal
 
-    x1 = mapHeight - x1 * res
-    x2 = mapHeight - x2 * res
 
 
     start = x1, y1
@@ -24,6 +19,9 @@ def wavefront(res,start,goal,obstaclesSet):
     
     seen = set()
     distances = [[0] * mapWidth for _ in range(mapHeight)]
+    for x,y in obstaclesSet:
+        distances[x][y] = 1000
+
     L = list()
     q = deque(L)
     q.append(goal)
@@ -50,7 +48,7 @@ def wavefront(res,start,goal,obstaclesSet):
 
     #at this point we have found a path to the end.
     #now start at the beginning and repeatedly choose the lowest valued neighbor until you get to the end
-    
+
     x,y = start
     returnPath = list()
     returnPath.append((x,y))

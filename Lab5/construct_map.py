@@ -226,13 +226,16 @@ img, obstaclesSet = construct_map(isEasy, resolution)
 
 
 start = (1,1) #input these on demo day
-goal = (10,30)
-path = wavefront(resolution,start,goal,obstaclesSet)
-img = drawPath(path,img)
+goal = (130,130)
+if goal in obstaclesSet:
+    print('CANNOT')
+else:
+    path = wavefront(resolution,start,goal,obstaclesSet)
+    img = drawPath(path,img)
 
-plt.imshow(img, cmap=plt.cm.gray, origin='lower')
+    plt.imshow(img, cmap=plt.cm.gray, origin='lower')
 #plt.show()
 
-plt.savefig("map.png", dpi=300, bbox_inches="tight")
-print("saved map")
+    plt.savefig("map.png", dpi=300, bbox_inches="tight")
+    print("saved map")
  
