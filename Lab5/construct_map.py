@@ -9,6 +9,7 @@ Author:         Joshua Samulak (jsamulak@andrew.cmu.edu)
 import math
 import numpy
 import matplotlib.pyplot as plt
+import time
 
 
 
@@ -217,18 +218,33 @@ def construct_map(isEasy, resolution):
 # that for some reason start with y values, then x values (blame plt, not me)
 
 # Example plt code using img result from construct_map:
+startTime = time.time()
 isEasy = False
-# Don't have less than 1 resolution...
-# RESOLUTION is the number of points you want per inch
-# (anything larger than 20 takes a while)
-resolution = 4
+resolution = 5
 img, obstaclesSet = construct_map(isEasy, resolution)
 
 
+#MAKES BUFFER
+bufferSize = 3 #this is the closest (in inches) that the robot will get to the obstacles
+#if it's running too close to the obstalces INCREASE THIS VALUE
+bufferSet = set()
+for x,y in obstaclesSet: 
+    for i in range(bufferSize * resolution):
+        for dr, dc in [(1,0),(0,1),(-1,0),(0,-1),(1,1),(-1,1),(-1,-1),(1,-1)]:
+            newX, newY = x + dr*i, y + dc*i
+            if (newX, newY) not in obstaclesSet and (newX, newY) not in bufferSet:
+                bufferSet.add((newX,newY)) #extend the obstacle
+                img[newX][newY] = [0,0,255] #color the buffer blue
+
+for x,y in bufferSet:
+    obstaclesSet.add((x,y))
+
+
+
 start = (1,1) #input these on demo day
-goal = (130,130)
+goal = (180,180)
 if goal in obstaclesSet:
-    print('CANNOT')
+    print('Goal is in an obstacle. Aborting execution')
 else:
     path = wavefront(resolution,start,goal,obstaclesSet)
     img = drawPath(path,img)
@@ -238,4 +254,6 @@ else:
 
     plt.savefig("map.png", dpi=300, bbox_inches="tight")
     print("saved map")
+    elapsedTime = time.time() - startTime
+    print(f"ran in {elapsedTime:.1f} seconds")
  

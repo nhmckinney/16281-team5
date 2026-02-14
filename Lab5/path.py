@@ -20,7 +20,7 @@ def wavefront(res,start,goal,obstaclesSet):
     seen = set()
     distances = [[0] * mapWidth for _ in range(mapHeight)]
     for x,y in obstaclesSet:
-        distances[x][y] = 1000
+        distances[x][y] = 300
 
     L = list()
     q = deque(L)
