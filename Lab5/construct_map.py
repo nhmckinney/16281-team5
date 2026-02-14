@@ -175,8 +175,10 @@ def check_obstacles(obstacles, x, y):
 
 def drawPath(path,img):
     for x,y in path:
-        img[x,y] = [255,255,255]
-
+        for dr, dc in [(1,0),(0,1),(-1,0),(0,-1),(1,1),(-1,1),(-1,-1),(1,-1)]:
+            newX, newY = x + dr, y + dc
+            if 0 <= newX < len(img) and 0 <= newY < len(img[0]):
+                img[newX][newY] = [255,255,255]
     return img
 
 def construct_map(isEasy, resolution):
