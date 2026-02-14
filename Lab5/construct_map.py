@@ -10,6 +10,10 @@ import math
 import numpy
 import matplotlib.pyplot as plt
 
+
+
+from path import wavefront
+
 """
 #! IT IS HIGHLY RECOMMENDED YOU EDIT THIS FILE TO IMPLEMENT A CONFIGURATION SPACE
 #! HOW YOU DO THAT IS FULLY UP TO YOU! :D
@@ -168,9 +172,16 @@ def check_obstacles(obstacles, x, y):
             return True
     return False
 
+def drawPath(path,img):
+    for x,y in path:
+        img[x,y] = [255,255,255]
+
+    return img
+
 def construct_map(isEasy, resolution):
 
     obstacles = construct_obstacles(isEasy)
+    obstaclesSet = set()
 
     # Discritize points and run through them:
 
@@ -195,9 +206,10 @@ def construct_map(isEasy, resolution):
     for col in range(x_disc):
         for row in range(y_disc):
             hit = check_obstacles(obstacles, col/RESOLUTION, row/RESOLUTION)
+            if hit: obstaclesSet.add((row,col))
             img[row, col] = [hit * 255, 0, 0]
 
-    return img
+    return img, obstaclesSet
 
 
 # NOTE: Values in img are indexed (Y, X, color)
@@ -210,10 +222,17 @@ isEasy = False
 # RESOLUTION is the number of points you want per inch
 # (anything larger than 20 takes a while)
 resolution = 4
-img = construct_map(isEasy, resolution)
+img, obstaclesSet = construct_map(isEasy, resolution)
+
+
+start = (1,1) #input these on demo day
+goal = (10,30)
+path = wavefront(resolution,start,goal,obstaclesSet)
+img = drawPath(path,img)
 
 plt.imshow(img, cmap=plt.cm.gray, origin='lower')
 #plt.show()
 
 plt.savefig("map.png", dpi=300, bbox_inches="tight")
 print("saved map")
+ 
