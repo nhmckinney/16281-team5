@@ -220,7 +220,7 @@ def construct_map(isEasy, resolution):
 # Example plt code using img result from construct_map:
 startTime = time.time()
 isEasy = False
-resolution = 5
+resolution = 10
 img, obstaclesSet = construct_map(isEasy, resolution)
 
 
@@ -242,8 +242,12 @@ for x,y in bufferSet:
 
 
 start = (1,1) #input these on demo day
-goal = (180,180)
-if goal in obstaclesSet:
+goal = (50,70)
+
+start = start[0] * resolution, start[1] * resolution #EXPAND THE COORDINATES FROM INCHES TO PIXELS
+goal = goal[0] * resolution, goal[1] * resolution #EXPAND THE COORDINATES FROM INCHES TO PIXELS
+if goal in obstaclesSet: 
+    #TODO: bounds check
     print('Goal is in an obstacle. Aborting execution')
 else:
     path = wavefront(resolution,start,goal,obstaclesSet)
