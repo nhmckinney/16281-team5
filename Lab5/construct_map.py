@@ -223,6 +223,8 @@ def construct_map(isEasy, resolution):
 def generatePath(isEasy, resolution):
     startTime = time.time()
     img, obstaclesSet = construct_map(isEasy, resolution)
+    elapsedTime = time.time() - startTime
+    print(f"map constructed in {elapsedTime:.1f} seconds")
 
 
     #MAKES BUFFER
@@ -258,9 +260,9 @@ def generatePath(isEasy, resolution):
         #plt.imshow(img, cmap=plt.cm.gray, origin='lower')
         #plt.show()
 
-        plt.savefig("map.png", dpi=300, bbox_inches="tight")
+        plt.savefig("./map.png", dpi=300, bbox_inches="tight")
         print("saved map")
         elapsedTime = time.time() - startTime
-        print(f"ran in {elapsedTime:.1f} seconds")
+        print(f"path created in {elapsedTime:.1f} seconds")
         return path
  

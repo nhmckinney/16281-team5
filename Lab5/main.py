@@ -11,8 +11,6 @@ from construct_map import generatePath
 #from motorgo import BrakeMode, ControlMode, Plink
 
 
-from path import wavefront
-
 
 def main():
     isEasy = False
@@ -23,17 +21,25 @@ def main():
     i = 0
     prevDiff = (0,0)
     differences = list()
+    distances = list()
+    distance = 0
     while i < len(path) - 1:
         currCoord = path[i]
         nextCoord = path[i+1]
         newDiff = nextCoord[0] - currCoord[0], nextCoord[1] - currCoord[1]
         if newDiff != prevDiff:
             differences.append(newDiff)
+            distances.append(distance/resolution)
+            distance = 0
             prevDiff = newDiff
+        distance += 1
 
         i += 1
-
+    distances.append(distance/resolution)
+    distances.pop(0)
+    
     print(differences)
+    print(distances)
 
 
 
