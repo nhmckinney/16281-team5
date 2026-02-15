@@ -12,7 +12,6 @@ import matplotlib.pyplot as plt
 import time
 
 
-
 from path import wavefront
 
 """
@@ -220,46 +219,48 @@ def construct_map(isEasy, resolution):
 # that for some reason start with y values, then x values (blame plt, not me)
 
 # Example plt code using img result from construct_map:
-startTime = time.time()
-isEasy = False
-resolution = 10
-img, obstaclesSet = construct_map(isEasy, resolution)
+
+def generatePath(isEasy, resolution):
+    startTime = time.time()
+    img, obstaclesSet = construct_map(isEasy, resolution)
 
 
-#MAKES BUFFER
-bufferSize = 3 #this is the closest (in inches) that the robot will get to the obstacles
-#if it's running too close to the obstalces INCREASE THIS VALUE
-bufferSet = set()
-for x,y in obstaclesSet: 
-    for i in range(bufferSize * resolution):
-        for dr, dc in [(1,0),(0,1),(-1,0),(0,-1),(1,1),(-1,1),(-1,-1),(1,-1)]:
-            newX, newY = x + dr*i, y + dc*i
-            if (newX, newY) not in obstaclesSet and (newX, newY) not in bufferSet:
-                bufferSet.add((newX,newY)) #extend the obstacle
-                img[newX][newY] = [0,0,255] #color the buffer blue
+    #MAKES BUFFER
+    bufferSize = 3 #this is the closest (in inches) that the robot will get to the obstacles
+    #if it's running too close to the obstalces INCREASE THIS VALUE
+    bufferSet = set()
+    for x,y in obstaclesSet: 
+        for i in range(bufferSize * resolution):
+            for dr, dc in [(1,0),(0,1),(-1,0),(0,-1),(1,1),(-1,1),(-1,-1),(1,-1)]:
+                newX, newY = x + dr*i, y + dc*i
+                if (newX, newY) not in obstaclesSet and (newX, newY) not in bufferSet:
+                    bufferSet.add((newX,newY)) #extend the obstacle
+                    img[newX][newY] = [0,0,255] #color the buffer blue
 
-for x,y in bufferSet:
-    obstaclesSet.add((x,y))
+    for x,y in bufferSet:
+        obstaclesSet.add((x,y))
 
 
 
-start = (1,1) #input these on demo day
-goal = (50,70)
+    start = (1,1) #input these on demo day
+    goal = (50,70)
 
-start = start[0] * resolution, start[1] * resolution #EXPAND THE COORDINATES FROM INCHES TO PIXELS
-goal = goal[0] * resolution, goal[1] * resolution #EXPAND THE COORDINATES FROM INCHES TO PIXELS
-if goal in obstaclesSet: 
-    #TODO: bounds check
-    print('Goal is in an obstacle. Aborting execution')
-else:
-    path = wavefront(resolution,start,goal,obstaclesSet)
-    img = drawPath(path,img)
+    start = start[0] * resolution, start[1] * resolution #EXPAND THE COORDINATES FROM INCHES TO PIXELS
+    goal = goal[0] * resolution, goal[1] * resolution #EXPAND THE COORDINATES FROM INCHES TO PIXELS
+    if goal in obstaclesSet: 
+        #TODO: bounds check
+        print('Goal is in an obstacle. Aborting execution')
+        return
+    else:
+        path = wavefront(resolution,start,goal,obstaclesSet)
+        img = drawPath(path,img)
 
-    plt.imshow(img, cmap=plt.cm.gray, origin='lower')
-#plt.show()
+        #plt.imshow(img, cmap=plt.cm.gray, origin='lower')
+        #plt.show()
 
-    plt.savefig("map.png", dpi=300, bbox_inches="tight")
-    print("saved map")
-    elapsedTime = time.time() - startTime
-    print(f"ran in {elapsedTime:.1f} seconds")
+        plt.savefig("map.png", dpi=300, bbox_inches="tight")
+        print("saved map")
+        elapsedTime = time.time() - startTime
+        print(f"ran in {elapsedTime:.1f} seconds")
+        return path
  
