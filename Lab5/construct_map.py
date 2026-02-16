@@ -245,7 +245,7 @@ def generatePath(isEasy, resolution, start, goal):
 
     #EXHAUSTIVE TEST
     #TESTS EVERY POSSIBLE START AND GOAL
-    for startX in range(54):
+    '''for startX in range(54):
         for startY in range(72):
             for goalX in range(54):
                 for goalY in range(72):
@@ -262,9 +262,9 @@ def generatePath(isEasy, resolution, start, goal):
                         #plt.show()
 
                         elapsedTime = time.time() - startTime
-                        print(f"done in {elapsedTime:.1f} seconds")
+                        print(f"done in {elapsedTime:.1f} seconds")'''
 
-    '''start = start[0] * resolution, start[1] * resolution #EXPAND THE COORDINATES FROM INCHES TO PIXELS
+    start = start[0] * resolution, start[1] * resolution #EXPAND THE COORDINATES FROM INCHES TO PIXELS
     goal = goal[0] * resolution, goal[1] * resolution #EXPAND THE COORDINATES FROM INCHES TO PIXELS
     if goal in obstaclesSet: 
         print('Goal is in an obstacle. Aborting execution')
@@ -276,9 +276,25 @@ def generatePath(isEasy, resolution, start, goal):
         #plt.imshow(img, cmap=plt.cm.gray, origin='lower')
         #plt.show()
 
-        plt.savefig("./map.png", dpi=300, bbox_inches="tight")
+        plt.figure(figsize=(8,6))
+        plt.imshow(img, origin='lower')
+        plt.axis("off")
+        plt.savefig("map.png", dpi=300, bbox_inches="tight")
+        plt.close()
         print("saved map")
         elapsedTime = time.time() - startTime
         print(f"path created in {elapsedTime:.1f} seconds")
-        return path'''
- 
+        return path
+
+def main():
+    isEasy = True
+    resolution = 4   # keep low on robot
+
+    start = (3, 3)   # inches
+    goal = (50, 70)  # inches
+
+    print("Starting path generation...")
+    generatePath(isEasy, resolution, start, goal)
+    print("Program finished.")
+
+main()
