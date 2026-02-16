@@ -220,7 +220,7 @@ def construct_map(isEasy, resolution):
 
 # Example plt code using img result from construct_map:
 
-def generatePath(isEasy, resolution):
+def generatePath(isEasy, resolution, start, goal):
     startTime = time.time()
     img, obstaclesSet = construct_map(isEasy, resolution)
     elapsedTime = time.time() - startTime
@@ -243,14 +243,30 @@ def generatePath(isEasy, resolution):
         obstaclesSet.add((x,y))
 
 
+    #EXHAUSTIVE TEST
+    #TESTS EVERY POSSIBLE START AND GOAL
+    for startX in range(54):
+        for startY in range(72):
+            for goalX in range(54):
+                for goalY in range(72):
+                    startTime = time.time()
+                    start = start[0] * resolution, start[1] * resolution 
+                    goal = goal[0] * resolution, goal[1] * resolution
+                    if goal in obstaclesSet: 
+                        continue
+                    else:
+                        path = wavefront(resolution,start,goal,obstaclesSet)
+                        img = drawPath(path,img)
 
-    start = (1,1) #input these on demo day
-    goal = (50,70)
+                        #plt.imshow(img, cmap=plt.cm.gray, origin='lower')
+                        #plt.show()
 
-    start = start[0] * resolution, start[1] * resolution #EXPAND THE COORDINATES FROM INCHES TO PIXELS
+                        elapsedTime = time.time() - startTime
+                        print(f"done in {elapsedTime:.1f} seconds")
+
+    '''start = start[0] * resolution, start[1] * resolution #EXPAND THE COORDINATES FROM INCHES TO PIXELS
     goal = goal[0] * resolution, goal[1] * resolution #EXPAND THE COORDINATES FROM INCHES TO PIXELS
     if goal in obstaclesSet: 
-        #TODO: bounds check
         print('Goal is in an obstacle. Aborting execution')
         return
     else:
@@ -264,5 +280,5 @@ def generatePath(isEasy, resolution):
         print("saved map")
         elapsedTime = time.time() - startTime
         print(f"path created in {elapsedTime:.1f} seconds")
-        return path
+        return path'''
  

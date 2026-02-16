@@ -13,9 +13,14 @@ from construct_map import generatePath
 
 
 def main():
+    #====================================INPUT THESE ON TEST DAY ====================================
+    start = (1,1) #input these on demo day
+    goal = (50,70)
+    #====================================INPUT THESE ON TEST DAY ====================================
+
     isEasy = False
     resolution = 10
-    path = generatePath(isEasy, resolution)
+    path = generatePath(isEasy, resolution, start, goal)
 
 
     i = 0
