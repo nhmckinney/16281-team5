@@ -7,12 +7,13 @@ def wavefront(res,start,goal,obstaclesSet):
     mapWidth = 72 * res
     mapHeight = 54 * res
 
-
+    print("start:", start)
+    print("goal:", goal)
+    print("mapHeight:", mapHeight)
+    print("mapWidth:", mapWidth)
 
     x1, y1 = start
     x2, y2 = goal
-
-
 
     start = x1, y1
     goal = x2, y2
@@ -30,7 +31,6 @@ def wavefront(res,start,goal,obstaclesSet):
     dirs = [(0,1),(1,0),(-1,0),(0,-1),(-1,-1),(1,1),(-1,1),(1,-1)]
     #EIGHT POINT CONNECTIVITY
 
-
     #wavefront bfs
     while q:
         x,y = q.popleft()
@@ -47,7 +47,8 @@ def wavefront(res,start,goal,obstaclesSet):
                 q.append((newX,newY))
 
     #at this point we have found a path to the end.
-    #now start at the beginning and repeatedly choose the lowest valued neighbor until you get to the end
+    #now start at the beginning and repeatedly choose the lowest 
+    # valued neighbor until you get to the end
 
     x,y = start
     returnPath = list()
@@ -67,8 +68,4 @@ def wavefront(res,start,goal,obstaclesSet):
         x, y = bestX, bestY
         returnPath.append((x,y))
 
-
-
     return returnPath
-
-    
