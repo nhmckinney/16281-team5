@@ -10,25 +10,11 @@ import adafruit_bh1750
 
 from motorgo import BrakeMode, ControlMode, Plink
 
-def runPowerPair(plink,left_motor,right_motor,left_power,right_power,
-                        x,y,theta,radius,baseDist):
-    leftScale = 1
-    rightScale = 0.75
-    prevEncLeft = -plink.channel3.position
-    print(prevEncLeft)
-    prevEncRight = plink.channel1.position
-    print(prevEncRight)
-    left_motor.power_command = left_power * leftScale
-    right_motor.power_command = -right_power * rightScale
-    tStart = time.time()
-        
-    while time.time() - tStart < 3:
-        currentLeft = -plink.channel3.position
-        currentRight = plink.channel1.position
+def odometry(plink,radius,baseDist, prevEncLeft, prevEncRight, x, y, theta):
+        currentLeft = -plink.channel1.position
+        currentRight = plink.channel3.position
         distChangeL = (currentLeft - prevEncLeft) * radius
         distChangeR = (currentRight - prevEncRight) * radius
-        prevEncLeft = currentLeft
-        prevEncRight = currentRight
 
         changeLeft = distChangeL
         changeRight = distChangeR
@@ -41,20 +27,18 @@ def runPowerPair(plink,left_motor,right_motor,left_power,right_power,
         #print(y)
         theta += changeRot
         # INSIDE THE WHILE LOOP
-        print(f"L_pos: {currentLeft:.2f} | R_pos: {currentRight:.2f} | dF: {changeForward:.4f} | dR: {changeRot:.4f}")
-        time.sleep(0.02)
-    print("DONE")
-    left_motor.power_command = 0
-    right_motor.power_command = 0
-    time.sleep(0.5)
+        #print(f"L_pos: {currentLeft:.2f} | R_pos: {currentRight:.2f} | dF: {changeForward:.4f} | dR: {changeRot:.4f}")
+        #print("DONE")
+        #left_motor.power_command = 0
+        #right_motor.power_command = 0
 
-    return x,y,theta
+        return x,y,theta,currentLeft,currentRight
 
 def main():
 
     plink = Plink()
-    left_motor = plink.channel3
-    right_motor = plink.channel1
+    left_motor = plink.channel1
+    right_motor = plink.channel3
     plink.connect()
 
     imu = plink.imu
@@ -62,31 +46,32 @@ def main():
     left_motor.control_mode = ControlMode.POWER
     right_motor.control_mode = ControlMode.POWER
 
-    i2c = board.I2C()
-    sensor = adafruit_bh1750.BH1750(i2c)
-
     time.sleep(3)
 
     wheelRadius = 2.4/2
-    distWheelBases = 6.0625
+    distWheelBases = 4.4
     x = 0
     y = 0
     theta = 0
+    tStart = time.time()
+    prevEncLeft = -plink.channel1.position
+    prevEncRight = plink.channel3.position
 
-    powerPairs = [
-        (-0.9,-0.72),
-        (0.63, -0.4),
-        (-0.55, 0.87)
-    ]
+    print(f"start vals: {x}, {y}, {theta}")
 
-    for lpower,rpower in powerPairs:
-        x,y,theta = runPowerPair(plink,left_motor,right_motor,lpower,rpower,
-                     x,y,theta,wheelRadius,distWheelBases)
+    while time.time() - tStart < 6:
+        x,y,theta,currentLeft,currentRight = odometry(plink, wheelRadius, 
+                            distWheelBases, prevEncLeft, prevEncRight,
+                                    x,y,theta)
+        prevEncLeft = currentLeft
+        prevEncRight = currentRight
+        time.sleep(0.02)
         
     print("FINAL POSITION")
     print(f"x = {x:.2f} inches")
     print(f"y = {y:.2f} inches")
     print(f"theta = {math.degrees(theta)%360} deg")
+    time.sleep(0.02)
 
 if __name__ == "__main__":
     main()
