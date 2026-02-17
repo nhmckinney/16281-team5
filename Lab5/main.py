@@ -7,97 +7,72 @@ import time
 from construct_map import generatePath
 import board
 import adafruit_bh1750
+from odo import odometry
 
 from motorgo import BrakeMode, ControlMode, Plink
 
-def odometry(plink,radius,baseDist, prevEncLeft, prevEncRight, x, y, theta,
-                left_motor,right_motor):
-    currentLeft = -plink.channel3.position
-    currentRight = plink.channel1.position
-    distChangeL = (currentLeft - prevEncLeft) * radius
-    distChangeR = (currentRight - prevEncRight) * radius
-    prevEncLeft = currentLeft
-    prevEncRight = currentRight
-
-    changeLeft = distChangeL
-    changeRight = distChangeR
-    changeForward = (changeLeft + changeRight) / 2
-    changeRot = (changeRight - changeLeft) / baseDist
-
-    x += changeForward * math.cos(theta + changeRot/2)
-    #print(x)
-    y += changeForward * math.sin(theta + changeRot/2)
-    #print(y)
-    theta += changeRot
-    # INSIDE THE WHILE LOOP
-    #print(f"L_pos: {currentLeft:.2f} | R_pos: {currentRight:.2f} | dF: {changeForward:.4f} | dR: {changeRot:.4f}")
-    #print("DONE")
-    left_motor.power_command = 0
-    right_motor.power_command = 0
-
-    return x,y,theta,currentLeft,currentRight
-
-#modified from lab 4
-def calcAngle(accel,angvel,grav,changetime,currAngle):
-    #inputs are the IMU outputs as numpy arrays
-    #should return angle which is what is used in the PID control loop
-    #there was a piazza post saying we should average some of the theta
-    #calculations using various sensors
-    angvx,angvy,angvz = angvel[0],angvel[1],angvel[2]
-    angleacc = math.atan2(accel[1],accel[0])
-    #weighted average below that can get changed based on tuning
-    k1 = 0.9
-    angle = k1 * (currAngle + angvz *changetime) + (1-k1) * angleacc
-    return angle
-
-def moveinline(plink,left_motor,right_motor,dx,dy,dist,startangle,imu):
-    P = 0.4
-    D = 0.2
-    preverror = 0
-    changetime = 0.05
-    radius = 2.25
-    baseDist = 4.4
-    prevEncLeft,prevEncRight = 0,0
-    x,y,theta = 0,0,0
-    startx,starty,starttheta,right,left = odometry(plink,radius,baseDist,
-                prevEncLeft, prevEncRight, x, y, theta,left_motor,right_motor)
-    targettheta = math.atan2(dy,dx)
-    print(startangle)
-    currtheta = starttheta
-    print(targettheta)
-    while True:
-        currx,curry,fadetheta,currR,currL = odometry(plink,radius,baseDist, 
-                prevEncLeft, prevEncRight, x, y, theta,left_motor,right_motor)
-        distance = math.sqrt((currx-startx)**2 + (curry-starty)**2)
-        currtheta = calcAngle(imu.accel,imu.gyro,imu.gravity_vector,changetime,
-                                currtheta)
-        print(f"distance gone: {distance:.2f}")
-        print(f"distance to go: {dist:.2f}")
-        print(f"current angle w.r.t. x axis being 0: {currtheta:.2f}")
-        if distance >= dist:
-            break
-
-        error = targettheta - currtheta
-        dererror = (error-preverror)/changetime
-        preverror = error
-        correct = P*error + D*dererror
-        minspeed = 0.2
-        leftspeed = minspeed - correct
-        rightspeed = -(minspeed + correct)
-        print("moving")
-        left_motor.power_command = leftspeed
-        right_motor.power_command = rightspeed
-        time.sleep(changetime)
 
 def main():
+
+    def moveinline(plink,dx,dy,dist,prevEncLeft,prevEncRight,angleDict):
+        P = 0.2
+        D = 0.1
+        prevError = 0
+        changeTime = 0.05
+        radius = 2.4/2
+        baseDist = 4.4
+        x,y,theta = 0,0,0
+        startx,starty,starttheta,right,left = odometry(plink,radius,baseDist,
+                    prevEncLeft, prevEncRight, x, y, theta)
+        targettheta = angleDict[(dy,dx)]
+        #print(f"start angle: {starttheta}")
+        currx, curry, currtheta = startx, starty, starttheta
+        #print(f"target angle: {targettheta}")
+        print(f"currtheta at start of move: {currtheta:.3f} rad")
+        print(f"targettheta: {targettheta:.3f} rad")
+        print(f"error before: {targettheta - currtheta:.3f} rad")
+        while True:
+            currx,curry,currtheta,currR,currL = odometry(plink, radius,baseDist, 
+                    prevEncLeft, prevEncRight, x, y, currtheta)
+            distance = math.sqrt((currx-startx)**2 + (curry-starty)**2)
+
+            #DEBUG PRINT STATEMENTS ===================================================
+            print(f"distance gone: {distance:.2f}")
+            print(f"distance to go: {dist:.2f}")
+            print(f"current angle w.r.t. x axis being 0: {currtheta:.2f}")
+            #DEBUG PRINT STATEMENTS ===================================================
+            if distance >= dist:
+                break
+
+            error = targettheta - currtheta
+            dererror = (error-prevError)/changeTime
+            prevError = error
+            correct = P*error + D*dererror
+            minspeed = 0.55
+            leftspeed = minspeed - correct
+            rightspeed = minspeed + correct
+            print("moving")
+            left_motor.power_command = leftspeed
+            right_motor.power_command = -rightspeed
+            time.sleep(changeTime)
+
+
+    def turn(dx,dy):
+        print(currAngle)
+        pass
+
+    def stopMotors():
+        left_motor.power_command = 0.0
+        right_motor.power_command = 0.0
+
     #====================================INPUT THESE ON TEST DAY ====================================
-    start = (1,1) #input these on demo day
-    goal = (50,70)
+    start = (5,5) #input these on demo day
+    goal = (50,60)
     #====================================INPUT THESE ON TEST DAY ====================================
 
     plink = Plink()
-    left_motor = plink.channel3
-    right_motor = plink.channel1
+    left_motor = plink.channel1
+    right_motor = plink.channel3
     plink.connect()
 
     imu = plink.imu
@@ -120,21 +95,23 @@ def main():
         currCoord = path[i]
         nextCoord = path[i+1]
         newDiff = nextCoord[0] - currCoord[0], nextCoord[1] - currCoord[1]
+
+        stepLength = math.sqrt((nextCoord[0] - currCoord[0])**2 + (nextCoord[1] - currCoord[1])**2)
         if newDiff != prevDiff:
             differences.append(newDiff)
             distances.append(distance/resolution)
             distance = 0
             prevDiff = newDiff
-        distance += 1
+        distance += stepLength
 
         i += 1
     distances.append(distance/resolution)
     distances.pop(0)
-    
-    print(differences)
-    print(distances)
 
-    startangledict = {
+    print(f"differences: {differences}")
+    print(f"distances: {distances}")
+
+    angleDictionary = {
         (0,1):0,
         (1,1):(math.pi/4),
         (1,0):(math.pi/2),
@@ -145,14 +122,23 @@ def main():
         (-1,1):((7*math.pi)/4)
     }
 
-    startdirs = (1,0)
-    stdy = startdirs[0]
-    stdx = startdirs[1]
+    currAngle = angleDictionary[differences[0]]
+    prevEncLeft = -plink.channel1.position
+    prevEncRight = plink.channel3.position
 
     for i in range(len(differences)):
-        print(f"pair {i}")
         dy,dx = differences[i]
-        moveinline(plink,left_motor,right_motor,dx,dy,distances[i],
-                    startangledict[(stdy,stdx)],imu)
+        moveinline(plink,dx,dy,distances[i],prevEncLeft,prevEncRight,
+                        angleDictionary)
+        stopMotors()
+        time.sleep(1)
+        prevEncLeft = -plink.channel1.position
+        prevEncRight = plink.channel3.position
+
+        #if i < len(differences) - 1:
+            #newDx, newDy = differences[i+1]
+            #turn(angleDictionary[newDx,newDy],'nothing')
+
+        time.sleep(1)
 
 main()
