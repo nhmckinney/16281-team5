@@ -266,6 +266,7 @@ def generatePath(isEasy, resolution, start, goal):
 
     start = start[0] * resolution, start[1] * resolution #EXPAND THE COORDINATES FROM INCHES TO PIXELS
     goal = goal[0] * resolution, goal[1] * resolution #EXPAND THE COORDINATES FROM INCHES TO PIXELS
+    
     if goal in obstaclesSet: 
         print('Goal is in an obstacle. Aborting execution')
         return
@@ -273,7 +274,7 @@ def generatePath(isEasy, resolution, start, goal):
         path = wavefront(resolution,start,goal,obstaclesSet)
         img = drawPath(path,img)
 
-        #plt.imshow(img, cmap=plt.cm.gray, origin='lower')
+        plt.imshow(img, cmap=plt.cm.gray, origin='lower')
         #plt.show()
 
         plt.figure(figsize=(8,6))
@@ -285,16 +286,3 @@ def generatePath(isEasy, resolution, start, goal):
         elapsedTime = time.time() - startTime
         print(f"path created in {elapsedTime:.1f} seconds")
         return path
-
-def main():
-    isEasy = True
-    resolution = 4   # keep low on robot
-
-    start = (3, 3)   # inches
-    goal = (50, 70)  # inches
-
-    print("Starting path generation...")
-    generatePath(isEasy, resolution, start, goal)
-    print("Program finished.")
-
-main()
