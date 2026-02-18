@@ -48,7 +48,7 @@ def main():
             error = normalize_angle(target_theta - current_theta)
 
             #WE COULD TRY CHANGING THIS TO LOWER AND THUS WOULD POTENTIALLY NOT UNDERSHOOT ANGLE
-            if abs(error) < 0.02: 
+            if abs(error) < 0.01: 
                 stopMotors()
                 break 
 
