@@ -273,6 +273,7 @@ def main():
     
     # Path Planning
     isEasy = False
+    #COULD INCREASE RESOLUTION? OR DOES THIS ONLY AFFECT THE PATH AND NOT THE CSPACE
     resolution = 10
     path = generatePath(isEasy, resolution, start, goal)
 
