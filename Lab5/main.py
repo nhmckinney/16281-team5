@@ -28,7 +28,7 @@ def main():
         
         print(f"--- Turning to {target_theta:.2f} (Curr: {current_theta:.2f}) ---")
  
-        P = 4.0
+        P = 4.2
         D = 0.2
 
         prevError = 0
@@ -65,9 +65,8 @@ def main():
                 correction = min_power if correction > 0 else -min_power
     
             # Update Motors
-            left_motor.power_command = -correction
-            right_motor.power_command = -correction
-
+            left_motor.power_command = -correction -0.1
+            right_motor.power_command = -correction -0.1
             # Update Encoders for next loop
             prevEncLeft = -plink.channel1.position
             prevEncRight = plink.channel3.position
@@ -226,7 +225,7 @@ def main():
         while True:
             # We pass 0,0 for x,y to odometry to track relative distance for this segment
             # But we pass current_theta to track global orientation
-            curr_x, curr_y, current_theta, currR, currL = odometry(plink, radius, baseDist, 
+            curr_x, curr_y, current_theta, currL, currR = odometry(plink, radius, baseDist, 
                     prevEncLeft, prevEncRight, curr_x, curr_y, current_theta)
             
             distance_traveled = math.sqrt(curr_x**2 + curr_y**2)
@@ -261,7 +260,7 @@ def main():
         right_motor.power_command = 0.0
 
     # ================= SETUP =================
-    start = (5, 49) 
+    start = (10, 20) 
     goal = (65, 5)
     startDirX,startDirY = (1,0)
     # ================= SETUP =================
