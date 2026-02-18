@@ -59,7 +59,7 @@ def wavefront(res, start, goal, obstaclesSet):
     # --- 3. PATH RECONSTRUCTION (Start -> Goal) ---
     
     # CHECK: Did the wave actually reach the start?
-    if distances[start[0]][start[1]] == 99999:
+    if distances[start[0]][start[1]] == 99999: #SHOULD THIS NOT BE 9999?????
         print("ERROR: No path exists from Start to Goal.")
         return []
 
