@@ -175,9 +175,9 @@ def check_obstacles(obstacles, x, y):
 def drawPath(path,img):
     for x,y in path:
         for dr, dc in [(1,0),(0,1),(-1,0),(0,-1),(1,1),(-1,1),(-1,-1),(1,-1)]:
-            newX, newY = x + dr, y + dc
-            if 0 <= newX < len(img) and 0 <= newY < len(img[0]):
-                img[newX][newY] = [255,255,255]
+            newX, newY = x + dc, y + dr
+            if 0 <= newX < len(img[0]) and 0 <= newY < len(img):
+                img[newY][newX] = [255,255,255]
     return img
 
 def construct_map(isEasy, resolution):
@@ -208,8 +208,8 @@ def construct_map(isEasy, resolution):
     for col in range(x_disc):
         for row in range(y_disc):
             hit = check_obstacles(obstacles, col/RESOLUTION, row/RESOLUTION)
-            if hit: obstaclesSet.add((row,col))
-            img[row, col] = [hit * 255, 0, 0]
+            if hit: obstaclesSet.add((col,row))
+            img[row][col] = [hit * 255, 0, 0]
 
     return img, obstaclesSet
 
@@ -228,16 +228,44 @@ def generatePath(isEasy, resolution, start, goal):
 
 
     #MAKES BUFFER
-    bufferSize = 3 #this is the closest (in inches) that the robot will get to the obstacles
+    bufferSize = 4.55 #this is the closest (in inches) that the robot will get to the obstacles
     #if it's running too close to the obstalces INCREASE THIS VALUE
     bufferSet = set()
-    for x,y in obstaclesSet: 
-        for i in range(bufferSize * resolution):
+
+    height = len(img)
+    width = len(img[0])
+
+# 1. Add all border pixels to a set
+# This covers Top, Bottom, Left, and Right
+    borderPixels = set()
+    for r in range(width):
+        borderPixels.add((r, 0))           # Left Edge
+        borderPixels.add((r, height - 1))   # Right Edge
+    for c in range(height):
+        borderPixels.add((0, c))           # Top Edge
+        borderPixels.add((width - 1, c))  # Bottom Edge
+
+# 2. Combine obstacles and borders into one list to process
+# We convert to a list so we can iterate over it easily
+    allTargets = set(obstaclesSet).union(borderPixels)
+    allTargets = list(allTargets)
+
+    # 3. Apply the buffer expansion to EVERYTHING (Obstacles + Borders)
+    for x,y in allTargets:
+        # Ensure the hard obstacle/border itself is colored (optional, but good for vis)
+        img[y][x] = [0, 0, 0] 
+
+        for i in range(int(bufferSize * resolution)):
             for dr, dc in [(1,0),(0,1),(-1,0),(0,-1),(1,1),(-1,1),(-1,-1),(1,-1)]:
-                newX, newY = x + dr*i, y + dc*i
-                if (newX, newY) not in obstaclesSet and (newX, newY) not in bufferSet:
-                    bufferSet.add((newX,newY)) #extend the obstacle
-                    img[newX][newY] = [0,0,255] #color the buffer blue
+                newX, newY = x + dc*i, y + dr*i
+                
+                # CRITICAL: Check bounds so we don't crash when expanding off the map
+                if 0 <= newX < width and 0 <= newY < height:
+                    # If it's not a hard obstacle and not already buffered
+                    if (newX, newY) not in obstaclesSet and (newX, newY) not in bufferSet:
+                        bufferSet.add((newX, newY))
+                        img[newY][newX] = [0, 0, 255] # Color the buffer blue
+
 
     for x,y in bufferSet:
         obstaclesSet.add((x,y))
@@ -279,9 +307,9 @@ def generatePath(isEasy, resolution, start, goal):
 
         plt.figure(figsize=(8,6))
         plt.imshow(img, origin='lower')
-        plt.axis("off")
+        #plt.axis("off")
         plt.savefig("map.png", dpi=300, bbox_inches="tight")
-        plt.close()
+        #plt.close()
         print("saved map")
         elapsedTime = time.time() - startTime
         print(f"path created in {elapsedTime:.1f} seconds")
