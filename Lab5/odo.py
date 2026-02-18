@@ -34,44 +34,44 @@ def odometry(plink,radius,baseDist, prevEncLeft, prevEncRight, x, y, theta):
 
         return x,y,theta,currentLeft,currentRight
 
-def main():
+# def main():
 
-    plink = Plink()
-    left_motor = plink.channel1
-    right_motor = plink.channel3
-    plink.connect()
+#     plink = Plink()
+#     left_motor = plink.channel1
+#     right_motor = plink.channel3
+#     plink.connect()
 
-    imu = plink.imu
+#     imu = plink.imu
 
-    left_motor.control_mode = ControlMode.POWER
-    right_motor.control_mode = ControlMode.POWER
+#     left_motor.control_mode = ControlMode.POWER
+#     right_motor.control_mode = ControlMode.POWER
 
-    time.sleep(3)
+#     time.sleep(3)
 
-    wheelRadius = 2.4/2
-    distWheelBases = 4.4
-    x = 0
-    y = 0
-    theta = 0
-    tStart = time.time()
-    prevEncLeft = -plink.channel1.position
-    prevEncRight = plink.channel3.position
+#     wheelRadius = 2.4/2
+#     distWheelBases = 4.4
+#     x = 0
+#     y = 0
+#     theta = 0
+#     tStart = time.time()
+#     prevEncLeft = -plink.channel1.position
+#     prevEncRight = plink.channel3.position
 
-    print(f"start vals: {x}, {y}, {theta}")
+#     print(f"start vals: {x}, {y}, {theta}")
 
-    while time.time() - tStart < 6:
-        x,y,theta,currentLeft,currentRight = odometry(plink, wheelRadius, 
-                            distWheelBases, prevEncLeft, prevEncRight,
-                                    x,y,theta)
-        prevEncLeft = currentLeft
-        prevEncRight = currentRight
-        time.sleep(0.02)
+#     while time.time() - tStart < 6:
+#         x,y,theta,currentLeft,currentRight = odometry(plink, wheelRadius, 
+#                             distWheelBases, prevEncLeft, prevEncRight,
+#                                     x,y,theta)
+#         prevEncLeft = currentLeft
+#         prevEncRight = currentRight
+#         time.sleep(0.02)
         
-    print("FINAL POSITION")
-    print(f"x = {x:.2f} inches")
-    print(f"y = {y:.2f} inches")
-    print(f"theta = {math.degrees(theta)%360} deg")
-    time.sleep(0.02)
+#     print("FINAL POSITION")
+#     print(f"x = {x:.2f} inches")
+#     print(f"y = {y:.2f} inches")
+#     print(f"theta = {math.degrees(theta)%360} deg")
+#     time.sleep(0.02)
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
