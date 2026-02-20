@@ -1,0 +1,88 @@
+# Logic for code:
+
+***SETUP PHASE (before moving)***
+
+    SET total_sectors to 16
+    SET course_map to list of 1s and 0s matching the cardboard blocks on the track
+    SET goal_sector to target number from TA
+
+    Start by assuming we could be anywhere
+    CREATE LIST belief_array with 16 items, each set to (1.0 / 16.0)
+
+    // Tuneable constants for trust (Uncertainty)
+    SET sensor_match TO 0.85     // Trust the ToF sensor 85%
+    SET sensor_mismatch TO 0.15  // Chance of a false positive/negative 
+
+    SET move_exact TO 0.80       // 80% chance odometry was perfect
+    SET move_short TO 0.10       // 10% chance we hit a stretch and fell short
+    SET move_long TO 0.10        // 10% chance we hit a dent and went too far
+
+    // Odometry ruler
+    SET ticks_per_sector TO [average encoder ticks needed to travel one sector]
+    SET current_ticks TO 0
+
+***MAIN LOOP***
+WHILE robot is running DO:
+    
+    // Put sensor code in a try-catch block so sudden errors don't crash the robot (Instructions from writeup)
+    TRY: 
+        
+        // A. Move and Measure
+        CALL follow_black_line_slightly() 
+            //This function moves the robot forwards just slightly so the robot is always checking if it has driven enough ticks to enter a new sector.
+        ADD new_wheel_rotations TO current_ticks
+        
+        // B. Did we enter a new sector?
+        IF current_ticks >= ticks_per_sector THEN:
+            SET current_ticks TO 0  // Reset the ruler for the next sector
+            
+            // C. Math Step 1: The Motion Update (Shift & Smear)
+            CREATE LIST new_belief_array WITH 16 items all set to 0.0
+            
+            FOR EACH sector_index FROM 0 TO 15 DO:
+                // Smear the probabilities from the adjacent sectors
+                prob_from_exact = belief_array[previous sector] * move_exact
+                prob_from_short = belief_array[current sector] * move_short
+                prob_from_long = belief_array[two sectors back] * move_long
+                
+                SET new_belief_array[sector_index] TO (prob_from_exact + prob_from_short + prob_from_long)
+                
+            SET belief_array TO new_belief_array // Overwrite old guesses with new ones
+            
+            // D. Math Step 2: Comparing the ToF reading to the carboard box map, and updating sector probabilities
+            SET sensor_reading TO read_ToF_sensor() // Returns 1 if block, 0 if empty
+            
+            FOR EACH sector_index FROM 0 TO 15 DO:
+                SET expected_reading TO course_map[sector_index]
+                
+                IF sensor_reading EQUALS expected_reading THEN:
+                    // Sensor matches the map -> Boost probability
+                    MULTIPLY belief_array[sector_index] BY sensor_match
+                ELSE:
+                    // Sensor contradicts the map -> Penalize probability
+                    MULTIPLY belief_array[sector_index] BY sensor_mismatch
+            
+            // E. Math Step 3: Balancing the Odds (Normalization)
+            SET total_probability TO the sum of all numbers in belief_array
+            
+            FOR EACH sector_index FROM 0 TO 15 DO:
+                DIVIDE belief_array[sector_index] BY total_probability
+                
+            // F. Report and Check Goal
+            FIND the highest_percentage in belief_array
+            FIND the best_sector_number attached to that highest percentage
+            
+            // Keep terminal clean by printing only the highest probability location
+            PRINT "Highest probability location: Sector [best_sector_number], Confidence: [highest_percentage]"
+            
+            IF best_sector_number EQUALS goal_sector AND highest_percentage IS GREATER THAN 85% THEN:
+                CALL stop_motors()
+                PRINT "Goal Reached!"
+                BREAK  // Exits the WHILE loop entirely
+                
+    CATCH ANY ERRORS:
+        PRINT "Sensor glitched, trying again..."
+        
+    // Safety Net: Add a sleep statement so reading sensors non-stop doesn't cause errors
+    SLEEP for 0.01 seconds
+```
