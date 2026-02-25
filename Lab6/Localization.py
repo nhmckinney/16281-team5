@@ -22,8 +22,9 @@ tof_sensor.start_ranging()
 
 #CONSTANTS
 TOTAL_SECTORS = 16
-COURSE_MAP = [1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0] # Insert map
-GOAL_SECTOR = 11
+COURSE_MAP = [1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0
+, 0, 0, 0] # Insert map
+GOAL_SECTOR = 5
 
 belief_array = [1.0 / TOTAL_SECTORS] * TOTAL_SECTORS
 SENSOR_MATCH = 0.85 #trust tof sensor 85% when input matches map
@@ -33,29 +34,26 @@ MOVE_SHORT = 0.00625 # smear
 MOVE_LONG = 0.00625  # smear 
 
 THRESHOLD = 8
-BASE_SPEED = 0.385
-KP = 0.065
-KD = 0.03
+BASE_SPEED = 0.395
+KP = 0.015
+KD = 0.06
 
 RADIANS_PER_SECTOR = 88.5/16
 current_radians = 0.0
-
-last_error = 0 
 
 last_encoder_radians = 0 
 
 
 #HELPER FUNCS
-def follow_black_line_slightly():
-    global last_error
+def follow_black_line_slightly(last_error):
     
     current_lux = light_sensor.lux
     
     error = current_lux - THRESHOLD
-    derivative = error - last_error
+    derivative = (error - last_error)/0.01
+    last_error = error
     correction = ((error * KP) + (derivative * KD))
     #print(error)
-    last_error = error
 
     raw_l_cmd = (BASE_SPEED + correction)
     raw_r_cmd = (BASE_SPEED - correction)
@@ -64,11 +62,13 @@ def follow_black_line_slightly():
     #print(f"right: {raw_r_cmd}")
     
     # speeds must stay b/w -1/1
-    clamped_l_cmd = max(-1.0, min(1.0, raw_l_cmd))
-    clamped_r_cmd = max(-1.0, min(1.0, raw_r_cmd))
+    clamped_l_cmd = max(-1, min(1, raw_l_cmd))
+    clamped_r_cmd = max(-1, min(1, raw_r_cmd))
     
     left_motor.power_command = clamped_l_cmd
     right_motor.power_command = -clamped_r_cmd
+
+    return last_error
 
 def read_encoder_change():
     global last_encoder_radians
@@ -116,12 +116,11 @@ def main():
     global current_radians, belief_array, last_encoder_radians
     
     last_encoder_radians = (-left_motor.position + right_motor.position) / 2.0
-    
+    last_error = 0
     print("Starting Localization Run...")
-
     while True:
         try: 
-            follow_black_line_slightly()
+            last_error = follow_black_line_slightly(last_error)
             
             current_radians += read_encoder_change()
 
