@@ -36,32 +36,30 @@ tof_sensor.start_ranging()
 # ==========================================
 
 # --- Bayes Filter Map & Goal ---
-# Used by: main()
 TOTAL_SECTORS = 16
 # The Map: 1 bit equals cardboard, 0 bit equals empty space. Update for your specific trial.
-COURSE_MAP = [1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] # Insert map
-GOAL_SECTOR = 4 # Replace with actual goal sector
+COURSE_MAP = [1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0] # Insert map
+GOAL_SECTOR = 11 # Replace with actual goal sector
 
 # --- Probabilities & Tuning Constants ---
-# Used by: main()
 belief_array = [1.0 / TOTAL_SECTORS] * TOTAL_SECTORS
 SENSOR_MATCH = 0.85      # Trust the ToF sensor 85% when reality matches the map
 SENSOR_MISMATCH = 0.15   # 15% chance of a false positive/negative from the sensor
-MOVE_EXACT = 0.80        # 80% chance odometry perfectly tracked one sector
-MOVE_SHORT = 0.10        # 10% chance we fell short 
-MOVE_LONG = 0.10         # 10% chance we went too far 
+MOVE_EXACT = 0.985          # 90% chance odometry perfectly tracked one sector
+MOVE_SHORT = 0.00625      # 5% chance we fell short 
+MOVE_LONG = 0.00625        # 5% chance we went too far 
 
 # --- Line Following Constants ---
 # Used by: follow_black_line_slightly()
 THRESHOLD = 8
-BASE_SPEED = 0.3
-KP = 0.08
+BASE_SPEED = 0.385
+KP = 0.065
 KD = 0.03
 
 # --- Odometry Constants & Variables ---
 # Used by: main()
 # Remember: Measure this physically by pushing your robot one sector distance!
-RADIANS_PER_SECTOR = 87.7/16  # Measure thru testing
+RADIANS_PER_SECTOR = 88.5/16  # Measure thru testing
 current_radians = 0.0
 
 # --- Memory Variables ---
@@ -70,6 +68,9 @@ last_error = 0
 
 # Used by: read_encoder_change() (Note: it is initialized at the start of main())
 last_encoder_radians = 0 
+
+#for debugging
+#actual_sector = 0
 
 
 # ==========================================
@@ -134,13 +135,15 @@ def read_ToF_sensor():
     while not tof_sensor.data_ready:
         pass
         
-    # The API documentation clears the interrupt before reading distance
+
     tof_sensor.clear_interrupt()
     distance_cm = tof_sensor.distance
+
+    print(distance_cm)
     
-    # If a cardboard block is detected within 40cm, return 1 (Match)
-    # You may need to tune this 40cm distance threshold based on your robot's width!
-    if distance_cm < 40.0:
+    if 12.0 < distance_cm < 45.0:
+        print(f"box")
+        print(f"distance: {distance_cm}")
         return 1
     
     return 0
@@ -151,6 +154,11 @@ def read_ToF_sensor():
 # ==========================================
 
 def main():
+
+    #while True:
+     #   read_ToF_sensor()
+
+
     global current_radians, belief_array, last_encoder_radians
     
     # Initialize the encoder memory before starting the loop so math doesn't spike
@@ -170,6 +178,8 @@ def main():
             # B. Did we enter a new sector?
             if current_radians >= RADIANS_PER_SECTOR:
                 current_radians = 0.0  # Reset the ruler for the next sector
+                #actual_sector +=1
+                #print(f"Actual sector: {actual_sector}")
                 
                 # ---------------------------------------------------------
                 # C. Math Step 1: The Motion Update (Shift & Smear)
@@ -207,7 +217,7 @@ def main():
                 total_probability = sum(belief_array)
                 for i in range(TOTAL_SECTORS):
                     belief_array[i] /= total_probability
-                    print(f"belief_array[{i}]: {belief_array[i]}")
+                    #print(f"belief_array[{i}]: {belief_array[i]}")
                     
                 # ---------------------------------------------------------
                 # F. Report and Check Goal
@@ -218,6 +228,7 @@ def main():
                 # Keep terminal output clean
                 print(f"Highest prob location: Sector {best_sector_number} | Confidence: {highest_percentage:.2%}")
                 
+
                 # If highly confident we are in the target destination, stop
                 if best_sector_number == GOAL_SECTOR and highest_percentage > 0.85:
                     stop_motors()
@@ -231,7 +242,7 @@ def main():
             break
             
         except Exception as e:
-            #print(f"Sensor glitched: {e}, trying again...")
+            print(f"Sensor glitched: {e}, trying again...")
             pass
             
         # Sleep statement prevents sensor/I2C overload
