@@ -22,9 +22,9 @@ tof_sensor.start_ranging()
 
 #CONSTANTS
 TOTAL_SECTORS = 16
-COURSE_MAP = [1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0
-, 0, 0, 0] # Insert map
-GOAL_SECTOR = 5
+COURSE_MAP = [1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0
+, 1, 0, 0] # Insert map
+GOAL_SECTOR = 11
 
 belief_array = [1.0 / TOTAL_SECTORS] * TOTAL_SECTORS
 SENSOR_MATCH = 0.85 #trust tof sensor 85% when input matches map
