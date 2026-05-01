@@ -7,26 +7,17 @@ import board
 from motorgo import ControlMode, Plink
 
 def calcAngle(accel,angvel,grav,changetime,currAngle):
-    #for nathan and dho explanation
     #inputs are the IMU outputs as numpy arrays
     #should return angle which is what is used in the PID control loop
     #there was a piazza post saying we should average some of the theta
     #calculations using various sensors
-    accx,accy,accz = accel[0],accel[1],accel[2]
     angvx,angvy,angvz = angvel[0],angvel[1],angvel[2]
     gravx,gravy,gravz = grav[0],grav[1],grav[2]
     anglegrav = math.atan2(gravy,gravz)
-    # weighted average depending on which is more accurate/useful, can play 
-    # around with k between 0 and 1
-    #another weighted average below that can get changed based on tuning
-    # k2 should probably be a lot closer to 1 (like 0.9-1) because what matters
-    # way more is the gyro I heard another group talking about how they did the
-    # same as the calculation before and used k2 = 0.98. I tried using k2 = 0.98
-    # and the numbers started getting weird so idk might have to play around or 
-    # try to understand more how it works.
+    #weighted average below that can get changed based on tuning
     k1 = 0.4
     angle = k1 * (currAngle + angvy*changetime) + (1-k1) * anglegrav
-    return angle, angvy
+    return angle
 
 def main():
     plink = Plink()
@@ -42,49 +33,51 @@ def main():
     left_motor.control_mode = ControlMode.POWER
     right_motor.control_mode = ControlMode.POWER
     
-    P = 10.5       #15 w/ half used battery
+    P = 15.5    #FINAL P = 14
+    # P = 14
+     #15 w/ half used battery
     #10 with full battery
-    D = 0.5      #0.3 w/ half used battery
+    D = 0.35   #FINAL D = 0.35
+    # D = 0.4 or 0.5 
+      #0.3 w/ half used battery
     # D = 0.35 with full
     #WORKS: P = 15 D = 0.4
+    I = 0.0125
+    #FINAL I = 0.0125
+    #I = 0.0125
     tchange = 0.01 #time between while iterations (time.sleep(tchange))
 
     currAngle = 0 #initializing current angle, as robot should start straight up
     last_error = 0
+    ierror = 0
     # The IMU object provides the raw IMU data:
     # - 3-axis accelerometer data in m/s^2
     # - 3-axis gyroscope data in rad/s
     # - 3-axis magnetometer data in uT
 
     while True:
-        #1: read sensors (already done automatically)
-        #2: calculate change in time for angle calculation
-        # This step is only necessary if the "time.sleep(x)" isn't accurate
-        # enough and errors start accumulating. We can use the x in this 
-        #case as the time change since it is the (approximate) time between
-        #iterations of the while loop
-        
-        #3: calc angle
-        currAngle, gy = calcAngle(imu.accel,imu.gyro,imu.gravity_vector,
+        currAngle = calcAngle(imu.accel,imu.gyro,imu.gravity_vector,
                                 tchange,currAngle)
         print(f"angle: {currAngle:.1f}")
-
-        #gy is the gyroscope measurement for the rad/s, is used for the D control
-
-        #4: Use PID to control motors based on angle
+        if currAngle > 0.5: ierror = 0
+        #Use PID to control motors based on angle
         error = currAngle
         dererror = (error - last_error) / tchange
         last_error = error
-        output = P*error + D*dererror
+        output = P*error + D*dererror + I*ierror
 
         if output > 1:
             output = 1
         elif output < -1:
             output = -1
+        else:
+            ierror += currAngle *tchange
+
+        print(f"ierror: {ierror:.2f}")
 
         left_motor.power_command = -output
         right_motor.power_command = output #motor is reversed
-        print(f"output: {output:.1f}")
+        print(f"output: {output:.2f}")
 
         #print("----")
         #print(f"Acceleration: {imu.accel}")
@@ -93,19 +86,7 @@ def main():
         #print(f"Gravity Vector: {imu.gravity_vector}")
         #print("----")
 
-
-        #last_error = 0 
-        #error = CURRENT - DESIRED
-        #derivative = error - last_error
-        #correction = ((error * KP) + (derivative * KD))
-        #last_error = error
-
-        #l_cmd = BASE_SPEED + correction
-        #r_cmd = -(BASE_SPEED - correction)
-        #left_motor.power_command = 0.5 #l_cmd
-        #right_motor.power_command = 0.5 #r_cmd
-
-        # Delay as long as you need, communications continue in the background
+        # Delay as long as you need
         time.sleep(tchange)
 
 
